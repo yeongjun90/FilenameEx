@@ -118,7 +118,7 @@ public class ExtensionService {
 		Map ret = new HashMap();
 		try {
 			int count = extensionMapper.extension_name_check_active(extensionVO.getName());
-			if (count == 0) {
+			if (count == 0) { 
 				ret.put("result", "possible"); 
 			} else {
 				ret.put("result", "impossible");
