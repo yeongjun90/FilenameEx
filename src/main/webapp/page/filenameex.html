@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="EUC-KR">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<title>Insert title here</title>
+<script>
+	var files = new Array();
+	$(function() {
+		extension();
+
+		$('#files')
+				.on(
+						'change',
+						function() {
+							if (this.files.length > 0) {
+								var fileNames = "";
+								var dflt;
+								for (var i = 0; i < this.files.length; i++) {
+									fileName = this.files[i].name;
+									files.push(this.files[i]);
+									$("#filelist")
+											.append(
+													"<li><span>"
+															+ fileName
+															+ "</span><span onclick=file_drop(this);> X </span></li>");
+								}
+							}
+						});
+	})
+
+	function extension() {
+		$
+				.ajax({
+					url : "/filenameex/extensionList.json",
+					dataType : 'json',
+					type : 'POST',
+					success : function(data, textStats, jqXHR) {
+						var ext = data;
+						for (var i = 0; i < ext.length; i++) {
+							if (ext[i].type == "FIXED") {
+								if (ext[i].status == "ACTIVE") {
+									$("#fixed_tb")
+											.append(
+													"<input type='checkbox' checked='checked'  onchange=fixed_check('"
+															+ ext[i].e_tb_id
+															+ "',this); name='fixed_ch'/><span>"
+															+ ext[i].name
+															+ "</span>");
+								} else {
+									$("#fixed_tb")
+											.append(
+													"<input type='checkbox'  onchange=fixed_check('"
+															+ ext[i].e_tb_id
+															+ "',this); name='fixed_ch'/><span>"
+															+ ext[i].name
+															+ "</span>");
+								}
+							} else {
+								$("#custom_tb")
+										.append(
+												"<li>"
+														+ ext[i].name
+														+ " <span onclick=extension_delete('"
+														+ ext[i].e_tb_id
+														+ "')> X </span></li>");
+							}
+						}
+					}
+				})
+	}
+
+	function file_btn() {
+		$("#files").click();
+	}
+
+	function fixed_check(e_tb_id, ele) {
+		var checked = $(ele).is(":checked");
+		var status;
+		if (checked == true) {
+			status = "ACTIVE";
+		} else {
+			status = "INACTIVE";
+		}
+		$.ajax({
+			url : "/filenameex/fixed_update.json",
+			dataType : 'json',
+			type : 'POST',
+			data : {
+				e_tb_id : e_tb_id,
+				status : status
+			},
+			success : function(data, textStats, jqXHR) {
+			}
+		})
+
+	}
+
+	function custom_add() {
+		var custom_ext = $("#custom_ext").val();
+		var special_pattern = /[`~!@#$%^&*|\\\'\";:\/?]/gi;
+
+		if (custom_ext.search(/\s/) != -1
+				|| special_pattern.test(custom_ext) == true) {
+			alert("특수문자 및 공백 불가");
+		} else {
+			if (confirm("추가할까요?")) {
+				$.ajax({
+					url : "/filenameex/custom_add.json",
+					dataType : 'json',
+					type : 'POST',
+					data : {
+						name : custom_ext,
+						type : "CUSTOM",
+					},
+					success : function(data, textStats, jqXHR) {
+						if (data.result == "ok") {
+							location.reload();
+						} else if (data.result = "overlap") {
+							alert("확장자명 중복");
+							return false;
+						} else {
+							alert("실패");
+							return false;
+						}
+					}
+				})
+			}
+		}
+	}
+
+	function extension_delete(e_tb_id) {
+		if (confirm("삭제할까요?")) {
+			$.ajax({
+				url : "/filenameex/extension_delete.json",
+				dataType : 'json',
+				type : 'POST',
+				data : {
+					e_tb_id : e_tb_id,
+				},
+				success : function(data, textStats, jqXHR) {
+					if (data.result == "ok") {
+						location.reload();
+					} else {
+						alert("실패");
+						return false;
+					}
+				}
+			})
+		}
+	}
+
+	function file_upload() {
+		for (var i = 0; i < files.length; i++) {
+			var file = files[i];
+			var fileName = files[i].name;
+			var filelength = fileName.length;
+			var lastDot = fileName.lastIndexOf('.');
+			var fileExt = fileName.substring(lastDot + 1, filelength)
+					.toLowerCase();
+
+			$.ajax({
+				url : "/filenameex/name_check.json",
+				dataType : 'json',
+				type : 'POST',
+				data : {
+					name : fileExt,
+				},
+				success : function(data, textStats, jqXHR) {
+					console.log(data);
+					if (data.result == "possible") {
+						return true;
+					} else if (data.result == "impossible") {
+						alert(fileName + " : 불가능");
+						return false;
+					} else {
+						alert("실패");
+						return false;
+					}
+				}
+			})
+			file_add(file);
+		}
+	}
+
+	var uu = function(e) {
+
+	};
+
+	function file_add(file) {
+		var xhr = new XMLHttpRequest();
+		xhr.upload.onprogress = uu;
+
+		if (xhr.upload) {
+			xhr.onreadystatechange = function(e) {
+				if (xhr.readyState == 4) {
+					if (xhr.status == 200) {
+						var o = jQuery.parseJSON(xhr.responseText);
+					}
+				}
+			};
+			xhr.open("POST", "/filenameex/file_add.json", true);
+			var data = new FormData();
+			data.append('file', file);
+
+			xhr.send(data);
+
+		}
+
+	}
+</script>
+</head>
+<body>
+	<div>
+		<table>
+			<tr>
+				<th>고정 확장자</th>
+				<td><div id="fixed_tb"></div></td>
+			</tr>
+			<tr>
+				<th>커스텀 확장자</th>
+				<td><input type="text" id="custom_ext" />
+					<button onclick="custom_add();">+ 추가</button></td>
+			</tr>
+			<tr>
+				<td><ul id="custom_tb" style="list-style: none;"></ul></td>
+			</tr>
+			<tr>
+				<th>파일업데이트</th>
+				<td colspan="3" class="board_files"><span class="file_name"><button
+							onclick="file_btn();">파일선택</button> <input id="files" type="file"
+						name="fileselect[]" multiple style="display: none;" /> </span>
+					<button onclick="file_upload();">업로드</button></td>
+			</tr>
+			<tr>
+				<th>업데이트목록</th>
+				<td><ul id="filelist"></ul></td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>
