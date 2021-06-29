@@ -44,16 +44,26 @@ public class ExtensionService {
 	public Map custom_add(ExtensionVO extensionVO) {
 		Map ret = new HashMap();
 		try {
-			int count = extensionMapper.extension_name_check(extensionVO.getName());
-			if (count == 0) {
-				int result = extensionMapper.extension_add(extensionVO);
-				if (result == 1) {
-					ret.put("result", "ok");
+			int allcount = extensionMapper.extension_countAll();
+			if (allcount < 200) {
+				int namelength = extensionVO.getName().length();
+				if (namelength <= 20) {
+					int count = extensionMapper.extension_name_check(extensionVO.getName());
+					if (count == 0) {
+						int result = extensionMapper.extension_add(extensionVO);
+						if (result == 1) {
+							ret.put("result", "ok");
+						} else {
+							ret.put("result", "fail");
+						}
+					} else {
+						ret.put("result", "overlap");
+					}
 				} else {
-					ret.put("result", "fail");
+					ret.put("result", "length excess");
 				}
 			} else {
-				ret.put("result", "overlap");
+				ret.put("result", "Excess");
 			}
 		} catch (Exception e) {
 			ret.put("result", "fail");
@@ -118,8 +128,8 @@ public class ExtensionService {
 		Map ret = new HashMap();
 		try {
 			int count = extensionMapper.extension_name_check_active(extensionVO.getName());
-			if (count == 0) { 
-				ret.put("result", "possible"); 
+			if (count == 0) {
+				ret.put("result", "possible");
 			} else {
 				ret.put("result", "impossible");
 			}

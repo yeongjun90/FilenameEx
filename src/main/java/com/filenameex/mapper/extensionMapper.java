@@ -27,6 +27,9 @@ public interface extensionMapper {
 
 	@Delete("delete from extension_tb where e_tb_id=#{e_tb_id}")
 	public int extension_delete(ExtensionVO extensionVO);
+	
+	@Select("select count(*) c from extension_tb where type='CUSTOM'")
+	public int extension_countAll();
 
 	@Select("select count(*) c from extension_tb where name=#{name}")
 	public int extension_name_check(String name);
