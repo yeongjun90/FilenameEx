@@ -119,7 +119,7 @@ public class ExtensionService {
 		try {
 			int count = extensionMapper.extension_name_check_active(extensionVO.getName());
 			if (count == 0) {
-				ret.put("result", "possible");
+				ret.put("result", "possible"); 
 			} else {
 				ret.put("result", "impossible");
 			}
