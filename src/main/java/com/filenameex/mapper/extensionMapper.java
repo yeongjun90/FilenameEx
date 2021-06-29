@@ -30,6 +30,9 @@ public interface extensionMapper {
 
 	@Select("select count(*) c from extension_tb where name=#{name}")
 	public int extension_name_check(String name);
+	
+	@Select("select count(*) c from extension_tb where name=#{name} and status='ACTIVE'")
+	public int extension_name_check_active(String name);
 
 	@Update("update extension_tb set status=#{status} where e_tb_id=#{e_tb_id}")
 	public int extension_fixed_update(ExtensionVO extensionVO);
